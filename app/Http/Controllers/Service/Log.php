@@ -7,10 +7,10 @@ class Log
     public static function write (string $content, bool $append = true)
     {
         if ($append) {
-            return file_put_contents(self::format($content), env("LOG_FILE"), FILE_APPEND);
+            return file_put_contents(env("LOG_FILE"), self::format($content), FILE_APPEND);
         }
 
-        return file_put_contents(self::format($content), env("LOG_FILE"));
+        return file_put_contents(env("LOG_FILE"), self::format($content));
     }
 
     public static function format (string $content)
