@@ -39,13 +39,9 @@ class UserController extends Controller
             )
         );
 
-        Log::write(json_encode($data));
-
         $userData = json_decode(
             Tool::sendRequest("https://api.github.com/user", "GET", ["access_token" => $data->access_token])
         );
-
-        Log::write(json_encode($userData));
 
         if ($this->isRegistered($userData->id)) {
             $this->update($userData);
@@ -54,8 +50,6 @@ class UserController extends Controller
         }
 
         $userData->token = Tool::generateToken($userData->id);
-
-        log::write(json_encode($userData));
 
         return view("index", $userData);
     }
