@@ -62,10 +62,10 @@ class UserController extends Controller
 
     /**
      * 添加新用户
-     * @param object $userData
+     * @param  $userData
      * @return mixed
      */
-    public function store (object $userData)
+    public function store ($userData)
     {
         return DB::transaction(function () use ($userData) {
              DB::table("user")->insert([
