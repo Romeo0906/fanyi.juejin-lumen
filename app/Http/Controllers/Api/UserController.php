@@ -42,7 +42,7 @@ class UserController extends Controller
         Log::write(json_encode($data));
 
         $userData = json_decode(
-            Tool::sendRequest("https://api.github.com/user?access_token=" . $data["access_token"])
+            Tool::sendRequest("https://api.github.com/user?access_token=" . $data->access_token)
         );
 
         Log::write(json_encode($userData));
