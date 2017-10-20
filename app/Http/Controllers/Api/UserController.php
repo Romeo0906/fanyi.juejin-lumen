@@ -34,7 +34,7 @@ class UserController extends Controller
                         "client_secret" => env("GITHUB_APP_KEY")
                     ),
                     array(
-                        "Accept"        => "application/json"
+                        "Accept: application/json"
                     )
             )
         );
