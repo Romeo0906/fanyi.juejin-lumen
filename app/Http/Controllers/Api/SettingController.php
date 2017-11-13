@@ -8,8 +8,8 @@
 
 namespace App\Http\Controllers\Api;
 
-use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\DB;
 
 
 class SettingController extends Controller
@@ -27,22 +27,26 @@ class SettingController extends Controller
         ]);
     }
 
-    public function pull (int $user)
+    public function show(int $user)
     {
         return response()->json(
             DB::table("userSetting")->where("user", $user)->first()
         , 200);
     }
 
-    public function push (int $user)
+    public function update(int $user)
     {
-        return response()->json(
+        if (
             DB::table("userSetting")->where("user", $user)->update([
-                "tranInform"    => $this->request->input("tranInform"),
-                "reviInform"    => $this->request->input("reviInform"),
-                "postInform"    => $this->request->input("postInform"),
-                "resuInform"    => $this->request->input("resuInform")
+                "tranInform" => $this->request->input("newtranslation"),
+                "reviInform" => $this->request->input("newreview"),
+                "postInform" => $this->request->input("newarticle"),
+                "resuInform" => $this->request->input("newresult")
             ])
-        , 200);
+        ) {
+            return response("OK", 200);
+        } else {
+            return response("Not Implemented", 501);
+        }
     }
 }

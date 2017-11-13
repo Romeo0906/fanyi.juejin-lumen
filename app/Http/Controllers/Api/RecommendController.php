@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers\Api;
 
-use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Service\Mail;
 use App\Http\Controllers\Service\Tool;
-use App\Http\Controllers\Service\Task;
+use Illuminate\Support\Facades\DB;
 
 class RecommendController extends Controller
 {
@@ -29,7 +28,12 @@ class RecommendController extends Controller
         }
 
         return response()->json(
-            DB::table("recommend")->where("status", $status)->get()
+            DB::table("recommend")
+                ->where("status", $status)
+                ->orderBy("id", "ASC")
+                ->skip($this->start)
+                ->take($this->offset)
+                ->get()
         , 200);
     }
 
@@ -47,18 +51,22 @@ class RecommendController extends Controller
             return response()->json(["message" => $unique . " 重复！"], 400);
         }
 
-        return $this->show(
-                DB::table("recommend")->insertGetId([
-                    "category"      => $this->request->input("category"),
-                    "title"         => $this->request->input("title"),
-                    "url"           => $this->request->input("url"),
-                    "recommender"   => $this->request->input("recommender"),
-                    "description"   => $this->request->input("description"),
-                    "status"        => $this->status["created"],
-                    "udate"         => date("Y-m-d H:i:s"),
-                    "cdate"         => date("Y-m-d H:i:s")
-                ])
-            );
+        if (
+        $id = DB::table("recommend")->insertGetId([
+            "category" => $this->request->input("category"),
+            "title" => $this->request->input("title"),
+            "url" => $this->request->input("url"),
+            "recommender" => $this->request->input("recommender"),
+            "description" => $this->request->input("description"),
+            "status" => $this->status["created"],
+            "udate" => date("Y-m-d H:i:s"),
+            "cdate" => date("Y-m-d H:i:s")
+        ])
+        ) {
+            return $this->show($id);
+        } else {
+            return response("Not Implemented", 501);
+        }
     }
 
     /**
@@ -97,7 +105,7 @@ class RecommendController extends Controller
             $mail->recommend($id);
             return response("OK", 200);
         } else {
-            return response("Internal Server Error", 500);
+            return response("Not Implemented", 501);
         }
     }
 

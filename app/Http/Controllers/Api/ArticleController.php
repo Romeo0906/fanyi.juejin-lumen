@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\Api;
 
-use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\DB;
 
 class ArticleController extends Controller
 {
@@ -14,7 +14,7 @@ class ArticleController extends Controller
     public function index ()
     {
         return response()->json(
-                    DB::table("article")->skip($this->start)->take($this->offset)->get()
+            DB::table("article")->orderBy("id", "ASC")->skip($this->start)->take($this->offset)->get()
                 , 200);
     }
 
@@ -28,16 +28,20 @@ class ArticleController extends Controller
             return response()->json(["message" => $mandatory . " 为空！"], 400);
         }
 
-        return $this->show(
-                DB::table("article")->insertGetId([
-                    "category"  => $this->request->input("category"),
-                    "title"     => $this->request->input("title"),
-                    "url"       => $this->request->input("url"),
-                    "content"   => $this->request->input("content"),
-                    "udate"     => date("Y-m-d H:i:s"),
-                    "cdate"     => date("Y-m-d H:i:s")
-                ])
-            );
+        if (
+        $id = DB::table("article")->insertGetId([
+            "category" => $this->request->input("category"),
+            "title" => $this->request->input("title"),
+            "url" => $this->request->input("url"),
+            "content" => $this->request->input("content"),
+            "udate" => date("Y-m-d H:i:s"),
+            "cdate" => date("Y-m-d H:i:s")
+        ])
+        ) {
+            return $this->show($id);
+        } else {
+            return response("Not Implemented", 501);
+        }
     }
 
     /**
@@ -63,14 +67,18 @@ class ArticleController extends Controller
             return response()->json(["message" => $mandatory . " 为空！"], 400);
         }
 
-        return $this->show(
+        if (
             DB::table("article")->where("id", $id)->update([
                 "category"  => $this->request->input("category"),
                 "title"     => $this->request->input("title"),
                 "url"       => $this->request->input("url"),
                 "content"   => $this->request->input("content")
             ])
-        );
+        ) {
+            return $this->show($id);
+        } else {
+            return response("Not Implemented", 501);
+        }
     }
 
     /**
@@ -83,7 +91,7 @@ class ArticleController extends Controller
         if (DB::table("article")->where("id", $id)->delete()) {
             return response("OK", 200);
         } else {
-            return response("Internal Server Error", 500);
+            return response("Not Implemented", 501);
         }
     }
 

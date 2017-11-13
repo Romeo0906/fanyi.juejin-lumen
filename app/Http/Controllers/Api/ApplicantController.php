@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Api;
 
-use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Service\Mail;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Class ApplicantController
@@ -71,7 +71,7 @@ class ApplicantController extends Controller
         ) {
             return response("OK", 200);
         } else {
-            return response("Internal Server Error", 500);
+            return response("Not Implemented", 501);
         }
     }
 
@@ -101,7 +101,7 @@ class ApplicantController extends Controller
             $mail->applicant($id);
             return response("OK", 200);
         } else {
-            return response("Internal Server Error", 500);
+            return response("Not Implemented", 501);
         }
     }
 
@@ -113,17 +113,29 @@ class ApplicantController extends Controller
      */
     public function activate (int $user, string $invitation)
     {
-        $applicant = DB::table("applicant")->where("invitation", $invitation)->first();
-
-        if ($applicant === null) {
+        if ($this->checkInvitation($invitation) === null) {
             return response()->json(["message" => "邀请码有误！"], 400);
         }
 
-        DB::transaction(function () use ($user, $invitation) {
-            DB::table("user")->where("id", $user)->update(["translator" => 1]);
-            DB::table("applicant")->where("invitation", $invitation)->update(["invitation" => md5($invitation)]);
-        });
+        try {
+            DB::transaction(function () use ($user, $invitation) {
+                DB::table("user")->where("id", $user)->update(["translator" => 1]);
+                DB::table("applicant")->where("invitation", $invitation)->update(["invitation" => md5($invitation)]);
+            });
+            return response("OK", 200);
+        } catch (\PDOException $e) {
+            return response("Not Implemented", 501);
+        }
 
-        return response("OK", 200);
+    }
+
+    /**
+     * 验证邀请码
+     * @param string $invitation
+     * @return mixed
+     */
+    public function checkInvitation(string $invitation)
+    {
+        return DB::table("applicant")->where("invitation", $invitation)->first();
     }
 }

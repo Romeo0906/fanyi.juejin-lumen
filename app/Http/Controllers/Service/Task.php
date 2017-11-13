@@ -7,16 +7,30 @@ use Illuminate\Support\Facades\DB;
 class Task
 {
     /**
-     * 清空用户任务
-     * @param int $user
+     * 添加新用户
+     * @param $user
      * @return mixed
      */
-    public function flash (int $user)
+    public function init($user)
     {
-        return DB::table("task")->where("user", $user)->update([
-            "translating"   => null,
-            "reviewing"     => null
+        return DB::table("task")->insert([
+            "user" => $user,
+            "translating" => 0,
+            "reviewing" => 0,
+            "udate" => date("Y-m-d H:i:s"),
+            "cdate" => date("Y-m-d H:i:s")
         ]);
+    }
+
+    /**
+     * 释放任务
+     * @param int $translation
+     * @param string $task
+     * @return mixed
+     */
+    public function flush(int $translation, string $task)
+    {
+        return DB::table("task")->where($task, $translation)->update([$task => 0]);
     }
 
     /**
@@ -24,26 +38,21 @@ class Task
      * @param int $user
      * @param string $task
      * @param int $translation
-     * @param bool $force
      * @return bool
      */
-    public function store (int $user, string $task, int $translation, bool $force = false)
+    public function store(int $user, int $translation, string $task)
     {
-        if (!$force && $this->search($user, $task)) {
-            return false;
-        }
-
-        return DB::table("userDetail")->where("user", $user)->update([$task => $translation]);
+        return DB::table("task")->where("user", $user)->update([$task => $translation]);
     }
 
     /**
-     * 查找任务
-     * @param int $user
+     * 任务计数
+     * @param int $translation
      * @param string $task
      * @return mixed
      */
-    public function search (int $user, string $task)
+    public function count(int $translation, string $task)
     {
-        return DB::table("userDetail")->where("user", $user)->value($task);
+        return DB::table("task")->where($task, $translation)->count();
     }
 }

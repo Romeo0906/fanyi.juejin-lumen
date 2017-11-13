@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\Api;
 
-use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\DB;
 
 class CategoryController extends Controller
 {
@@ -32,13 +32,17 @@ class CategoryController extends Controller
             return response()->json(["message" => $unique . " 重复！"], 400);
         }
 
-        return $this->show(
-                DB::table("category")->insertGetId([
-                    "category"  => $this->request->input("category"),
-                    "udate"     => date("Y-m-d H:i:s"),
-                    "cdate"     => date("Y-m-d H:i:s")
-                ])
-            );
+        if (
+        $id = DB::table("category")->insertGetId([
+            "category" => $this->request->input("category"),
+            "udate" => date("Y-m-d H:i:s"),
+            "cdate" => date("Y-m-d H:i:s")
+        ])
+        ) {
+            return $this->show($id);
+        } else {
+            return response("Not Implemented", 501);
+        }
     }
 
     /**
@@ -68,11 +72,16 @@ class CategoryController extends Controller
             return response()->json(["message" => $unique . " 重复！"], 400);
         }
 
+        if (
         DB::table("category")->where("id", $id)->update([
-            "category"  => $this->request->input("category")
-        ]);
+            "category" => $this->request->input("category")
+        ])
+        ) {
+            return $this->show($id);
+        } else {
+            return response("Not Implemented", 501);
+        }
 
-        return $this->show($id);
     }
 
     /**
@@ -85,7 +94,7 @@ class CategoryController extends Controller
         if (DB::table("category")->where("id", $id)->delete()) {
             return response("OK", 200);
         } else {
-            return response("Internal Server Error", 500);
+            return response("Not Implemented", 501);
         }
     }
 }

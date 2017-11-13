@@ -21,10 +21,10 @@ class Timeline
     public function write (int $translation, int $user, string $operation)
     {
         return DB::table("timeline")->insert(array(
-            'tid'       => $translation,
-            'uid'       => $user,
+            'translation' => $translation,
+            'user' => $user,
             'operation' => $operation,
-            'cdate'     => date("Y-m-d H:i:s")
+            'cdate' => date("Y-m-d H:i:s")
         ));
     }
 
@@ -36,9 +36,9 @@ class Timeline
     public function read (int $translation)
     {
     	return DB::table('timeline')
-    			->leftJoin('user', 'timeline.uid', '=', 'user.id')
-    			->select('timeline.operation', 'timeline.cdate', 'user.id as userId', 'user.name', 'user.avatar')
-    			->where('timeline.tid', $translation)
+            ->leftJoin('user', 'timeline.user', '=', 'user.id')
+            ->select('timeline.operation', 'timeline.cdate', 'user.name')
+            ->where('timeline.translation', $translation)
     			->get();
     }
 }

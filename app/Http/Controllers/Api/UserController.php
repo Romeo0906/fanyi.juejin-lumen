@@ -8,12 +8,12 @@
 
 namespace App\Http\Controllers\Api;
 
-use Illuminate\Support\Facades\DB;
-use App\Http\Controllers\Controller;
-use App\Http\Controllers\Service\Log;
-use App\Http\Controllers\Service\Tool;
 use App\Http\Controllers\Api\SettingController as Setting;
 use App\Http\Controllers\Api\StatisticController as Statistic;
+use App\Http\Controllers\Controller;
+use App\Http\Controllers\Service\Task;
+use App\Http\Controllers\Service\Tool;
+use Illuminate\Support\Facades\DB;
 
 
 class UserController extends Controller
@@ -26,68 +26,76 @@ class UserController extends Controller
     {
         $data = json_decode(
             Tool::sendRequest(
-                    "https://github.com/login/oauth/access_token",
-                    "POST",
-                    array(
-                        "code"          => $this->request->input("code"),
-                        "client_id"     => env("GITHUB_APP_ID"),
-                        "client_secret" => env("GITHUB_APP_KEY")
-                    ),
-                    array(
-                        "Accept: application/json"
-                    )
+                "https://github.com/login/oauth/access_token",
+                "POST",
+                array(
+                    "code" => $this->request->input("code"),
+                    "client_id" => env("GITHUB_APP_ID"),
+                    "client_secret" => env("GITHUB_APP_KEY")
+                ),
+                array(
+                    "Accept: application/json"
+                )
             )
         );
 
         $userData = json_decode(
-            Tool::sendRequest("https://api.github.com/user", "GET", ["access_token" => $data->access_token])
+            Tool::sendRequest("https://api.github.com/user", "GET", ["access_token" => $data->access_token ?? ""])
         );
 
         if ($this->isRegistered($userData->id)) {
-            $this->update($userData);
+            $login = $this->update($userData);
         } else {
-            $this->store($userData);
+            $login = $this->store($userData);
         }
 
-        $userData->token = Tool::generateToken($userData->id);
+        if ($login) {
+            $userData->token = Tool::generateToken($userData->id);
+            $data = array();
+        } else {
+            $data = array();
+        }
 
-        return view("index", $userData);
+        return view("index", $data);
     }
 
     /**
      * 添加新用户
-     * @param  $userData
-     * @return mixed
+     * @param \stdClass $userData
+     * @return bool
      */
-    public function store ($userData)
+    public function store(\stdClass $userData)
     {
-        return DB::transaction(function () use ($userData) {
-             DB::table("user")->insert([
-                "id"        => $userData->id,
-                "name"          => $userData->login,
-                "email"         => $userData->email,
-                "avatar"        => $userData->avatar_url,
-                "status"        => 1,
-                "advance"       => 0,
-                "admin"         => 0,
-                "translator"    => 0,
-                "udate"         => date("Y-m-d H:i:s"),
-                "cdate"         => date("Y-m-d H:i:s")
-            ]);
-            DB::table("userDetail")->insert([
-                "user"          => $userData->id,
-                "translated"    => 0,
-                "reviewed"      => 0,
-                "recommended"   => 0,
-                "point"         => 0,
-                "redeemed"      => 0,
-                "translating"   => null,
-                "reviewing"     => null,
-                "bio"           => $userData->bio,
-                "udate"         => date("Y-m-d H:i:s"),
-                "cdate"         => date("Y-m-d H:i:s")
-            ]);
-        });
+        try {
+            DB::transaction(function () use ($userData) {
+                DB::table("user")->insert([
+                    "id" => $userData->id,
+                    "name" => $userData->login,
+                    "email" => $userData->email,
+                    "avatar" => $userData->avatar_url,
+                    "status" => 1,
+                    "advance" => 0,
+                    "admin" => 0,
+                    "translator" => 0,
+                    "udate" => date("Y-m-d H:i:s"),
+                    "cdate" => date("Y-m-d H:i:s")
+                ]);
+                DB::table("userDetail")->insert([
+                    "user" => $userData->id,
+                    "translated" => 0,
+                    "reviewed" => 0,
+                    "recommended" => 0,
+                    "point" => 0,
+                    "redeemed" => 0,
+                    "bio" => $userData->bio,
+                    "udate" => date("Y-m-d H:i:s"),
+                    "cdate" => date("Y-m-d H:i:s")
+                ]);
+            });
+            return true;
+        } catch (\PDOException $e) {
+            return false;
+        }
     }
 
     /**
@@ -97,23 +105,33 @@ class UserController extends Controller
      */
     public function show (int $id)
     {
-        return response()->json(DB::table("user")->join("userDetail")->select(
-            "user.name", "user.email", "user.avatar", "userDetail.*"
-        )->where("id", $id)->first(), 200);
+        return response()->json(
+            DB::table("user")
+                ->join("userDetail", "userDetail.user", "=", "user.id")
+                ->select("user.name", "user.email", "user.avatar", "userDetail.*")
+                ->where("user.id", $id)
+                ->first()
+            , 200);
     }
 
     /**
      * 更新用户信息
-     * @param object $userData
-     * @return mixed
+     * @param \stdClass $userData
+     * @return bool
      */
-    public function update (object $userData)
+    public function update(\stdClass $userData)
     {
-        return DB::table("user")->where("id", $userData->id)->update([
-            "name"      => $userData->login,
-            "email"     => $userData->email,
-            "avatar"    => $userData->avatar_url
-        ]);
+        if (
+        DB::table("user")->where("id", $userData->id)->update([
+            "name" => $userData->login,
+            "email" => $userData->email,
+            "avatar" => $userData->avatar_url
+        ])
+        ) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
@@ -123,9 +141,13 @@ class UserController extends Controller
      */
     public function pull (int $id)
     {
-        return response()->json(DB::table("user")->join("userDetail")->select(
-            "user.*", "userDetail.bio", "userDetail.major"
-        )->where("id", $id)->first(), 200);
+        return response()->json(
+            DB::table("user")
+                ->join("userDetail", "userDetail.user", "=", "user.id")
+                ->select("user.*", "userDetail.bio")
+                ->where("user.id", $id)
+                ->first()
+            , 200);
     }
 
     /**
@@ -133,13 +155,15 @@ class UserController extends Controller
      * @param int $id
      * @param SettingController $setting
      * @param StatisticController $statistic
+     * @param Task $task
      * @return \Illuminate\Http\JsonResponse
      */
-    public function init (int $id, Setting $setting, Statistic $statistic)
+    public function init(int $id, Setting $setting, Statistic $statistic, Task $task)
     {
         return response()->json([
             "setting"   => $setting->init($id),
-            "statistic" => $statistic->init($id)
+            "statistic" => $statistic->init($id),
+            "task" => $task->init($id)
         ], 200);
     }
 

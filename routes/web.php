@@ -15,6 +15,11 @@ $router->get("/", function () use ($router) {
     return view("index");
 });
 
+$router->group(["prefix" => "test", "namespace" => "test"], function () use ($router) {
+    $router->get("transaction", "TestController@transaction");
+    $router->get("test", "TestController@test");
+});
+
 $router->group(["prefix" => "api", "namespace" => "Api"], function () use ($router) {
     $router->get("applicants", "ApplicantController@index");
     $router->post("applicants", "ApplicantController@store");
@@ -29,6 +34,13 @@ $router->group(["prefix" => "api", "namespace" => "Api"], function () use ($rout
     $router->get("recommends/{id}", "RecommendController@show");
     $router->put("recommends/{id}", "RecommendController@update");
     $router->get("users", "UserController@index");
+    $router->get("users/{id}", "UserController@show");
+    $router->get("users/pull/{id}", "UserController@pull");
+    $router->get("users/init/{id}", "UserController@init");
+    $router->get("settings/{id}", "SettingController@show");
+    $router->put("settings/{id}", "SettingController@update");
+    $router->post("translations", "TranslationController@store");
+    $router->post("translations/pr", "TranslationController@handlePR");
 });
 
 
