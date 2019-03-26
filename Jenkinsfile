@@ -3,18 +3,17 @@ pipeline {
     stages {
         stage('Build') {            
             steps {
-                composer 'install'
+                sh 'composer install ${WORKSPACE}/fanyi.juejin-lumen/'
             }
         }        
         stage('Test') {            
             steps {                
-                phpunit 'tests'
+                sh 'phpunit ${WORKSPACE}/fanyi.juejin-lumen/tests/'
             }        
         }
         stage('Deploy - Staging') {            
             steps {
-                cd 'fanyi.juejin-lumen/public'
-                php '-S 0.0.0.0:80'
+                sh 'php -S 0.0.0.0:80 -t ${WORKSPACE}/fanyi.juejin-lumen/public/'
                 echo 'Deploying onto staging'                
             }        
         }        
