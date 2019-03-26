@@ -1,14 +1,18 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'php:7.2'
+        }
+    }
     stages {
         stage('Build') {            
-            steps {                
-                echo 'Building'            
-            }        
+            steps {
+                composer 'install'
+            }
         }        
         stage('Test') {            
             steps {                
-                echo 'Testing'            
+                phpunit tests/
             }        
         }
         stage('Deploy - Staging') {            
@@ -34,7 +38,7 @@ pipeline {
             deleteDir() /* clean up our workspace */        
         }        
         success {            
-            echo 'I succeeeded!'        
+            echo 'I succeeded!'
         }        
         unstable {            
             echo 'I am unstable :/'        
