@@ -12,7 +12,7 @@ pipeline {
         }        
         stage('Test') {            
             steps {                
-                phpunit tests/
+                phpunit 'tests/'
             }        
         }
         stage('Deploy - Staging') {            
