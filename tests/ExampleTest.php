@@ -18,4 +18,9 @@ class ExampleTest extends TestCase
             $this->app->version(), $this->response->getContent()
         );
     }
+	
+	public function testSomething()
+	{
+		$this->assertTrue(true);
+	}
 }
