@@ -1,9 +1,5 @@
 pipeline {
-    agent {
-        docker {
-            image 'php:7.2'
-        }
-    }
+    agent any
     stages {
         stage('Build') {            
             steps {
@@ -16,7 +12,9 @@ pipeline {
             }        
         }
         stage('Deploy - Staging') {            
-            steps {                
+            steps {
+                cd 'fanyi.juejin-lumen/public'
+                php '-S 0.0.0.0:80'
                 echo 'Deploying onto staging'                
             }        
         }        
